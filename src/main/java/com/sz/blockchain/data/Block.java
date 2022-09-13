@@ -19,6 +19,8 @@ public class Block {
     @JsonIgnore
     private String hash;
 
+    private String nonce;
+
     public Integer getIndex() {
         return index;
     }
@@ -59,10 +61,23 @@ public class Block {
         this.hash = hash;
     }
 
-    public Block(Integer index, Date timestamp, List pending_transaction, String previous_hash) {
+    public Block(Integer index, Date timestamp, List pending_transaction, String previous_hash, String nonce) {
         this.index = index;
         this.timestamp = timestamp;
         this.pending_transaction = pending_transaction;
         this.previous_hash = previous_hash;
+        this.nonce = nonce;
+    }
+
+    @Override
+    public String toString() {
+        return "Block{" +
+                "index=" + index +
+                ", timestamp=" + timestamp +
+                ", pending_transaction=" + pending_transaction +
+                ", previous_hash='" + previous_hash + '\'' +
+                ", hash='" + hash + '\'' +
+                ", nonce='" + nonce + '\'' +
+                '}';
     }
 }

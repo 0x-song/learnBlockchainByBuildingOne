@@ -4,10 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sz.blockchain.data.Block;
 import com.sz.blockchain.util.MessageDigestUtils;
+import com.sz.blockchain.util.RandomUtils;
 
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Blockchain {
 
@@ -21,18 +20,25 @@ public class Blockchain {
 
         //初始化创世区块
         System.out.println("Creating genesis block:初始化创世区块");
-        new_block(null);
+        Block block = new_block();
+        this.chain.add(block);
     }
 
-    public void new_block(String previous_hash){
-        Block block = new Block(chain.size(), new Date(), pending_transactions, previous_hash);
+    public Block new_block(){
+        Block last_block = last_block();
+        String previous_hash = null;
+        if(last_block != null){
+            previous_hash = last_block.getHash();
+        }
+        Block block = new Block(chain.size(), new Date(), pending_transactions, previous_hash, RandomUtils.randomHexString());
         //获取到当前区块的hash
         String hash = hash(block);
         block.setHash(hash);
         this.pending_transactions.clear();
         //将当前区块加入到区块链中
-        this.chain.add(block);
-        System.out.println("created block " + block.getIndex());
+        //this.chain.add(block);
+//        System.out.println("created block " + block.getIndex());
+        return block;
     }
 
     public String hash(Block block){
@@ -46,12 +52,31 @@ public class Blockchain {
         return MessageDigestUtils.getSHA256Str(s);
     }
 
-    public void last_block(){
-
+    public Block last_block(){
+        if(chain.size() == 0){
+            return null;
+        }
+        return chain.get(chain.size() - 1);
     }
 
     public void new_transaction(){
 
+    }
+
+    public void proof_of_work(){
+        Block block  = null;
+        while (true){
+            block = new_block();
+            if(valid_hash(block)){
+                break;
+            }
+        }
+        this.chain.add(block);
+        System.out.println("mined a new block:出块了" + block);
+    }
+
+    public boolean valid_hash(Block block){
+        return block.getHash().startsWith("0000");
     }
 
     public List<Block> getChain() {
