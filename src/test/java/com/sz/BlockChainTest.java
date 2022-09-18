@@ -18,15 +18,15 @@ public class BlockChainTest {
 
     @Test
     public void test2() throws InterruptedException {
-        Blockchain blockchain = new Blockchain();
-        System.out.println(gson.toJson(blockchain));
-        Thread.sleep(2000);
-        Block secondBlock = blockchain.createBlock("the second block");
-        blockchain.addBlock(secondBlock);
-        System.out.println(gson.toJson(blockchain));
-        Thread.sleep(2000);
-        Block thirdBlock = blockchain.createBlock("the third block");
-        blockchain.addBlock(thirdBlock);
-        System.out.println(gson.toJson(blockchain));
+//        Blockchain blockchain = new Blockchain();
+//        System.out.println(gson.toJson(blockchain));
+//        Thread.sleep(2000);
+//        Block secondBlock = blockchain.createBlock("the second block");
+//        blockchain.addBlock(secondBlock);
+//        System.out.println(gson.toJson(blockchain));
+//        Thread.sleep(2000);
+//        Block thirdBlock = blockchain.createBlock("the third block");
+//        blockchain.addBlock(thirdBlock);
+//        System.out.println(gson.toJson(blockchain));
     }
 }

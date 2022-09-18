@@ -1,11 +1,11 @@
 package com.sz.blockchain.data;
+import com.sun.tools.classfile.ConstantPool;
 import com.sz.blockchain.consensus.ProofOfWork;
+import com.sz.blockchain.transaction.Input;
+import com.sz.blockchain.transaction.Output;
+import com.sz.blockchain.transaction.Transaction;
 
-import java.util.Date;
-import java.util.List;
-
-
-import java.util.ArrayList;
+import java.util.*;
 
 public class Blockchain {
 
@@ -24,7 +24,7 @@ public class Blockchain {
      * @param data
      * @return
      */
-    public Block createBlock(String data){
+    public Block createBlock(String data, List<Transaction> transactions){
         int size = blockchain.size();
         String previousHash = null;
         if(size == 0){
@@ -32,7 +32,7 @@ public class Blockchain {
         }else {
             previousHash = blockchain.get(size - 1).getHash();
         }
-        Block block = new Block(size, previousHash, new Date(), data);
+        Block block = new Block(size, previousHash, new Date(), data, transactions);
         long nonce = ProofOfWork.findNonce(block);
         block.setNonce(nonce);
         block.setHash();
@@ -44,7 +44,9 @@ public class Blockchain {
      * @return
      */
     public Block createGenesisBlock(){
-        return createBlock("This is the genesis block of my blockchain");
+        List<Transaction> transactions = new ArrayList<>();
+        transactions.add(Transaction.genesisTx());
+        return createBlock("This is the genesis block of my blockchain", transactions);
     }
 
     /**
@@ -60,5 +62,9 @@ public class Blockchain {
     public Blockchain(){
         Block genesisBlock = createGenesisBlock();
         addBlock(genesisBlock);
+    }
+
+    public List<Output> findUTXOs(String address){
+        return null;
     }
 }
