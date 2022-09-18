@@ -1,4 +1,6 @@
-package com.sz.blockchain;
+package com.sz.blockchain.data;
+import com.sz.blockchain.consensus.ProofOfWork;
+
 import java.util.Date;
 import java.util.List;
 
@@ -31,6 +33,8 @@ public class Blockchain {
             previousHash = blockchain.get(size - 1).getHash();
         }
         Block block = new Block(size, previousHash, new Date(), data);
+        long nonce = ProofOfWork.findNonce(block);
+        block.setNonce(nonce);
         block.setHash();
         return block;
     }
@@ -48,6 +52,8 @@ public class Blockchain {
      * @param block
      */
     public void addBlock(Block block){
+        boolean result = ProofOfWork.validatePow(block);
+        if(!result){}
         blockchain.add(block);
     }
 

@@ -1,8 +1,8 @@
 package com.sz;
 
 import com.google.gson.Gson;
-import com.sz.blockchain.Block;
-import com.sz.blockchain.Blockchain;
+import com.sz.blockchain.data.Block;
+import com.sz.blockchain.data.Blockchain;
 import org.junit.jupiter.api.Test;
 
 public class BlockChainTest {
