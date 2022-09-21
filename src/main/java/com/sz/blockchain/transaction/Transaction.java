@@ -1,8 +1,12 @@
 package com.sz.blockchain.transaction;
 
 import com.sz.blockchain.data.Blockchain;
+import com.sz.blockchain.util.ArraysUtils;
 import com.sz.blockchain.util.Constant;
 import com.sz.blockchain.util.CryptoUtils;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * UTXO:未花费的交易输出
@@ -71,8 +75,33 @@ public class Transaction {
         return tx;
     }
 
-    public static Transaction newTransaction(String send, String receiver, int amount){
-        return null;
+    public static Transaction newTransaction(String send, String receiver, int amount, Blockchain blockchain) throws Exception {
+        SpendableOutput spendableOutputs = blockchain.findSpendableOutputs(send, amount);
+        Map<String, int[]> unspentOutputs = spendableOutputs.getUnspentOutputs();
+        int accumulatedAmount = spendableOutputs.getAccumulatedAmount();
+        if(accumulatedAmount < amount){
+            throw new Exception("No Enough funds");
+        }
+        //需要把output构建成input
+        TXInput[] txInputs = {};
+        Set<String> txIds = unspentOutputs.keySet();
+        for (String txId : txIds) {
+            int[] outIds = unspentOutputs.get(txId);
+            for (int outId : outIds) {
+                txInputs = ArraysUtils.add(txInputs, new TXInput(txId, outId, send));
+
+            }
+        }
+        //构建output
+        TXOutput[] txOutputs = {};
+        txOutputs = ArraysUtils.add(txOutputs, new TXOutput(amount, receiver));
+        if(accumulatedAmount > amount){
+            //如果余额大于需要转账的金额，那么需要设置找零
+            txOutputs = ArraysUtils.add(txOutputs, new TXOutput(accumulatedAmount - amount, send));
+        }
+        Transaction newTX = new Transaction(null, txInputs, txOutputs);
+        newTX.setId();
+        return newTX;
     }
 
     public boolean isCoinBase(){

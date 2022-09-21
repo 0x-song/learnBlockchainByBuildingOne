@@ -1,9 +1,8 @@
 package com.sz.blockchain.util;
 
+import com.sz.blockchain.transaction.TXInput;
 import com.sz.blockchain.transaction.TXOutput;
 import com.sz.blockchain.transaction.Transaction;
-
-import java.util.Arrays;
 
 public class ArraysUtils {
 
@@ -41,5 +40,14 @@ public class ArraysUtils {
         }
         newUTXOs[utxOs.length] = txOutput;
         return newUTXOs;
+    }
+
+    public static TXInput[] add(TXInput[] txInputs, TXInput txInput) {
+        TXInput[] newTXInputs = new TXInput[txInputs.length + 1];
+        for (int i = 0; i < txInputs.length; i++) {
+            newTXInputs[i] = txInputs[i];
+        }
+        newTXInputs[txInputs.length] = txInput;
+        return newTXInputs;
     }
 }

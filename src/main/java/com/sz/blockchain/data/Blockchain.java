@@ -1,5 +1,6 @@
 package com.sz.blockchain.data;
 import com.sz.blockchain.consensus.ProofOfWork;
+import com.sz.blockchain.transaction.SpendableOutput;
 import com.sz.blockchain.transaction.TXInput;
 import com.sz.blockchain.transaction.TXOutput;
 import com.sz.blockchain.transaction.Transaction;
@@ -139,5 +140,37 @@ public class Blockchain {
             }
         }
         return spentXOs;
+    }
+
+    /**
+     * 寻找可用于进行交易的output，不需要加载出全部的output
+     * @param address
+     * @param amount
+     * @return
+     */
+    public SpendableOutput findSpendableOutputs(String address, int amount) {
+        Transaction[] unspentTransactions = findUnspentTransactions(address);
+        int accumulatedAmount = 0;
+        Map<String, int[]> unspentOutputs = new HashMap<>();
+        for (Transaction unspentTransaction : unspentTransactions) {
+            String txId = unspentTransaction.getId();
+            for (int outputId = 0; outputId < unspentTransaction.getTxOutputs().length; outputId++) {
+                TXOutput txOutput = unspentTransaction.getTxOutputs()[outputId];
+                if(txOutput.getReceiveAddress().equals(address) &&  accumulatedAmount < amount){
+                    accumulatedAmount += txOutput.getValue();
+                }
+                int[] outputIds = unspentOutputs.get(txId);
+                if(outputIds == null){
+                    outputIds = new int[]{outputId};
+                }else {
+                    outputIds = ArraysUtils.add(outputIds, outputId);
+                }
+                unspentOutputs.put(txId, outputIds);
+            }
+            if(accumulatedAmount >= amount){
+                break;
+            }
+        }
+        return new SpendableOutput(accumulatedAmount, unspentOutputs);
     }
 }
