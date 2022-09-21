@@ -1,7 +1,8 @@
 package com.sz.blockchain.transaction;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sz.blockchain.data.Blockchain;
+import com.sz.blockchain.util.Constant;
+import com.sz.blockchain.util.CryptoUtils;
 
 /**
  * UTXO:未花费的交易输出
@@ -16,47 +17,65 @@ public class Transaction {
     private String id;
 
     //转账的input:本次转账的前置交易的output
-    private List<Input> txInputs;
+    private TXInput[] txTXInputs;
 
     //转账的output
-    private List<Output> txOutputs;
+    private TXOutput[] txTXOutputs;
 
-    public Transaction(String id, List<Input> txInputs, List<Output> txOutputs) {
-        this.id = id;
-        this.txInputs = txInputs;
-        this.txOutputs = txOutputs;
-    }
+    private boolean isCoinBase;
 
-    public static Transaction genesisTx(){
-        List<Input> txIn = new ArrayList<>();
-        List<Output> txOut = new ArrayList<>();
-        txIn.add(new Input(null, -1, null));
-        txOut.add(new Output(50, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"));
-        Transaction genesisTx = new Transaction("This is the genesis transaction", txIn, txOut);
-        return genesisTx;
-    }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId() {
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append(txTXInputs).append(txTXOutputs);
+        String s = stringBuffer.toString();
+        this.id = CryptoUtils.getTwiceSHA256(s);
+    }
+
+    public TXInput[] getTxInputs() {
+        return txTXInputs;
+    }
+
+    public void setTxInputs(TXInput[] txTXInputs) {
+        this.txTXInputs = txTXInputs;
+    }
+
+    public TXOutput[] getTxOutputs() {
+        return txTXOutputs;
+    }
+
+    public void setTxOutputs(TXOutput[] txTXOutputs) {
+        this.txTXOutputs = txTXOutputs;
+    }
+
+    public Transaction(String id, TXInput[] txTXInputs, TXOutput[] txTXOutputs) {
         this.id = id;
+        this.txTXInputs = txTXInputs;
+        this.txTXOutputs = txTXOutputs;
     }
 
-    public List<Input> getTxInputs() {
-        return txInputs;
+    /**
+     * CoinBase交易
+     * @param receiverAddress
+     * @return
+     */
+    public static Transaction coinBaseTX(String receiverAddress){
+        TXInput txInput = new TXInput(null, -1, null);
+        TXOutput txOutput = new TXOutput(Constant.SUBSIDY, receiverAddress);
+        Transaction tx = new Transaction(null, new TXInput[]{txInput}, new TXOutput[]{txOutput});
+        tx.setId();
+        return tx;
     }
 
-    public void setTxInputs(List<Input> txInputs) {
-        this.txInputs = txInputs;
+    public static Transaction newTransaction(String send, String receiver, int amount){
+        return null;
     }
 
-    public List<Output> getTxOutputs() {
-        return txOutputs;
-    }
-
-    public void setTxOutputs(List<Output> txOutputs) {
-        this.txOutputs = txOutputs;
+    public boolean isCoinBase(){
+        return isCoinBase;
     }
 }

@@ -1,6 +1,6 @@
 package com.sz.blockchain.transaction;
 
-public class Output {
+public class TXOutput {
     //转出的资产
     private int value;
 
@@ -23,7 +23,7 @@ public class Output {
         this.receiveAddress = receiveAddress;
     }
 
-    public Output(int value, String receiveAddress) {
+    public TXOutput(int value, String receiveAddress) {
         this.value = value;
         this.receiveAddress = receiveAddress;
     }

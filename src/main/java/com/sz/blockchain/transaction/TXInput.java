@@ -1,12 +1,12 @@
 package com.sz.blockchain.transaction;
 
-public class Input {
+public class TXInput {
 
     //上一次交易编号
     private String txId;
 
     //上一次交易的第几个output
-    private int outIdx;
+    private int txOutputIndex;
 
     private String sendAddress;
 
@@ -18,12 +18,12 @@ public class Input {
         this.txId = txId;
     }
 
-    public int getOutIdx() {
-        return outIdx;
+    public int getTxOutputIndex() {
+        return txOutputIndex;
     }
 
-    public void setOutIdx(int outIdx) {
-        this.outIdx = outIdx;
+    public void setTxOutputIndex(int txOutputIndex) {
+        this.txOutputIndex = txOutputIndex;
     }
 
     public String getSendAddress() {
@@ -34,9 +34,9 @@ public class Input {
         this.sendAddress = sendAddress;
     }
 
-    public Input(String txId, int outIdx, String sendAddress) {
+    public TXInput(String txId, int txOutputIndex, String sendAddress) {
         this.txId = txId;
-        this.outIdx = outIdx;
+        this.txOutputIndex = txOutputIndex;
         this.sendAddress = sendAddress;
     }
 }
