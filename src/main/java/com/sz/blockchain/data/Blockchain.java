@@ -22,10 +22,10 @@ public class Blockchain {
 
     /**
      * 创建一个区块
-     * @param data
+     * @param
      * @return
      */
-    public Block createBlock(String data, Transaction[] transactions){
+    public Block createBlock(Transaction[] transactions){
         int size = blockchain.size();
         String previousHash = null;
         if(size == 0){
@@ -33,7 +33,7 @@ public class Blockchain {
         }else {
             previousHash = blockchain.get(size - 1).getHash();
         }
-        Block block = new Block(size, previousHash, new Date(), data, transactions);
+        Block block = new Block(size, previousHash, new Date(), transactions);
         long nonce = ProofOfWork.findNonce(block);
         block.setNonce(nonce);
         block.setHash();
@@ -46,7 +46,7 @@ public class Blockchain {
      */
     public Block createGenesisBlock(){
         Transaction[] transactions = new Transaction[]{Transaction.coinBaseTX("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")};
-        return createBlock("This is the genesis block of my blockchain", transactions);
+        return createBlock(transactions);
     }
 
     /**
@@ -57,6 +57,15 @@ public class Blockchain {
         boolean result = ProofOfWork.validatePow(block);
         if(!result){}
         blockchain.add(block);
+    }
+
+    /**
+     * 挖矿
+     * @param transactions
+     */
+    public void mineBlock(Transaction[] transactions){
+        Block block = createBlock(transactions);
+        addBlock(block);
     }
 
     public Blockchain(){

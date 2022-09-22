@@ -46,7 +46,7 @@ public class Block {
     }
 
 
-    public Block(int index, String previousHash, Date currentTime, String data, Transaction[] transactions) {
+    public Block(int index, String previousHash, Date currentTime, Transaction[] transactions) {
         this.index = index;
         this.previousHash = previousHash;
         this.currentTime = currentTime;
@@ -74,4 +74,6 @@ public class Block {
     public Transaction[] getTransactions() {
         return transactions;
     }
+
+
 }
