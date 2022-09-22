@@ -61,6 +61,7 @@ public class Blockchain {
 
     /**
      * 挖矿
+     * git config?
      * @param transactions
      */
     public void mineBlock(Transaction[] transactions){
