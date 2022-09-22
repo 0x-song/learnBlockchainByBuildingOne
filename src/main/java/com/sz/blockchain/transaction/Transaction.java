@@ -26,7 +26,7 @@ public class Transaction {
     //转账的output
     private TXOutput[] txTXOutputs;
 
-    private boolean isCoinBase;
+    private boolean isCoinBase = false;
 
 
     public String getId() {
@@ -72,6 +72,7 @@ public class Transaction {
         TXOutput txOutput = new TXOutput(Constant.SUBSIDY, receiverAddress);
         Transaction tx = new Transaction(null, new TXInput[]{txInput}, new TXOutput[]{txOutput});
         tx.setId();
+        tx.setCoinBase(true);
         return tx;
     }
 
@@ -106,5 +107,9 @@ public class Transaction {
 
     public boolean isCoinBase(){
         return isCoinBase;
+    }
+
+    public void setCoinBase(boolean coinBase) {
+        isCoinBase = coinBase;
     }
 }

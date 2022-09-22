@@ -12,12 +12,18 @@ public class Blockchain {
 
     private List<Block> blockchain = new ArrayList<>();
 
+    private static Blockchain blk = new Blockchain();
+
     public List<Block> getBlockchain() {
         return blockchain;
     }
 
     public void setBlockchain(List<Block> blockchain) {
         this.blockchain = blockchain;
+    }
+
+    public static Blockchain createBlockChain(){
+        return blk;
     }
 
     /**
@@ -69,10 +75,12 @@ public class Blockchain {
         addBlock(block);
     }
 
-    public Blockchain(){
+    private Blockchain(){
         Block genesisBlock = createGenesisBlock();
         addBlock(genesisBlock);
     }
+
+
 
     public TXOutput[] findUTXOs(String address){
         Transaction[] unspentTransactions = findUnspentTransactions(address);
@@ -119,7 +127,7 @@ public class Blockchain {
                 }
             }
         }
-        return null;
+        return unspentTXs;
     }
 
     /**
