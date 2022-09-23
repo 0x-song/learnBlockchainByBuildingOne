@@ -23,7 +23,7 @@ public class Wallet {
 
 
 
-    private void initWallet(){
+    private void initWallet() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
         createKeyPair();
     }
 
