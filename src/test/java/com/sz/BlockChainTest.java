@@ -3,10 +3,13 @@ package com.sz;
 import com.google.gson.Gson;
 import com.sz.blockchain.app.Account;
 import com.sz.blockchain.app.Client;
+import com.sz.blockchain.app.Wallet;
 import com.sz.blockchain.data.Block;
 import com.sz.blockchain.data.Blockchain;
 import com.sz.blockchain.transaction.Transaction;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 public class BlockChainTest {
 
@@ -38,5 +41,12 @@ public class BlockChainTest {
         System.out.println(balance1);
         Account road2web3 = Client.getBalance("road2web3");
         System.out.println(road2web3);
+    }
+
+    @Test
+    public void testWallet() throws IOException {
+        Wallet wallet = new Wallet();
+        String address = wallet.getAddress();
+        System.out.println(address);
     }
 }

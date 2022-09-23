@@ -1,9 +1,13 @@
 package com.sz.blockchain.app;
 
+import com.sz.blockchain.util.Base58Check;
+import com.sz.blockchain.util.CryptoUtils;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.security.*;
 
 /**
@@ -22,9 +26,52 @@ public class Wallet {
     public static final int ADDRESS_CHECKSUM_LENGTH = 4;
 
 
+    private PrivateKey privateKey;
+
+    private byte[] publicKey;
+
+
+    public Wallet(){
+        try {
+            initWallet();
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 生成钱包地址
+     * @return
+     */
+    public String getAddress() throws IOException {
+        byte[] ripeMD160Hash = CryptoUtils.ripeMD160Hash(publicKey);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        byteArrayOutputStream.write((byte) 0);
+        byteArrayOutputStream.write(ripeMD160Hash);
+        byte[] versionedPayload = byteArrayOutputStream.toByteArray();
+
+        // 3. 计算校验码
+        byte[] checksum = CryptoUtils.checkSum(versionedPayload);
+
+        // 4. 得到 version + payload + checksum 的组合
+        byteArrayOutputStream.write(checksum);
+        byte[] binaryAddress = byteArrayOutputStream.toByteArray();
+        // 5. 执行Base58转换处理
+        return Base58Check.rawBytesToBase58(binaryAddress);
+
+    }
+
 
     private void initWallet() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
-        createKeyPair();
+        KeyPair keyPair = createKeyPair();
+        PrivateKey privateKey = keyPair.getPrivate();
+        PublicKey publicKey = keyPair.getPublic();
+        this.privateKey = privateKey;
+        this.publicKey = publicKey.getEncoded();
     }
 
     /**
