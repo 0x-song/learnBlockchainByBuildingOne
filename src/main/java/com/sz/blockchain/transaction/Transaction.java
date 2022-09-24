@@ -5,6 +5,7 @@ import com.sz.blockchain.util.ArraysUtils;
 import com.sz.blockchain.util.Constant;
 import com.sz.blockchain.util.CryptoUtils;
 
+import java.lang.reflect.Array;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,7 +70,8 @@ public class Transaction {
      */
     public static Transaction coinBaseTX(String receiverAddress){
         TXInput txInput = new TXInput(null, -1, null);
-        TXOutput txOutput = new TXOutput(Constant.SUBSIDY, receiverAddress);
+//        TXOutput txOutput = new TXOutput(Constant.SUBSIDY, receiverAddress);
+        TXOutput txOutput = TXOutput.newTXOutput(Constant.SUBSIDY, receiverAddress);
         Transaction tx = new Transaction(null, new TXInput[]{txInput}, new TXOutput[]{txOutput});
         tx.setId();
         tx.setCoinBase(true);
@@ -95,10 +97,12 @@ public class Transaction {
         }
         //构建output
         TXOutput[] txOutputs = {};
-        txOutputs = ArraysUtils.add(txOutputs, new TXOutput(amount, receiver));
+        txOutputs = ArraysUtils.add(txOutputs, TXOutput.newTXOutput(amount, receiver));
+//        txOutputs = ArraysUtils.add(txOutputs, new TXOutput(amount, receiver));
         if(accumulatedAmount > amount){
             //如果余额大于需要转账的金额，那么需要设置找零
-            txOutputs = ArraysUtils.add(txOutputs, new TXOutput(accumulatedAmount - amount, send));
+            txOutputs = ArraysUtils.add(txOutputs, TXOutput.newTXOutput((accumulatedAmount - amount), send));
+//            txOutputs = ArraysUtils.add(txOutputs, new TXOutput(accumulatedAmount - amount, send));
         }
         Transaction newTX = new Transaction(null, txInputs, txOutputs);
         newTX.setId();

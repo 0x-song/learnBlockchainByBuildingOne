@@ -1,11 +1,23 @@
 package com.sz.blockchain.transaction;
 
+import com.sz.blockchain.util.Base58Check;
+
+import java.util.Arrays;
+
 public class TXOutput {
     //转出的资产
     private int value;
 
     //资产的接收方地址
-    private String receiveAddress;
+//    private String receiveAddress;
+
+    private byte[] pubKeyHash;
+
+    public static TXOutput newTXOutput(int value, String receiveAddress){
+        byte[] bytes = Base58Check.base58ToBytes(receiveAddress);
+        byte[] pubKeyHash = Arrays.copyOfRange(bytes, 1, bytes.length);
+        return new TXOutput(value, pubKeyHash);
+    }
 
     public int getValue() {
         return value;
@@ -15,16 +27,8 @@ public class TXOutput {
         this.value = value;
     }
 
-    public String getReceiveAddress() {
-        return receiveAddress;
-    }
-
-    public void setReceiveAddress(String receiveAddress) {
-        this.receiveAddress = receiveAddress;
-    }
-
-    public TXOutput(int value, String receiveAddress) {
+    public TXOutput(int value, byte[] pubKeyHash) {
         this.value = value;
-        this.receiveAddress = receiveAddress;
+        this.pubKeyHash = pubKeyHash;
     }
 }

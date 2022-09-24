@@ -10,6 +10,11 @@ public class TXInput {
 
     private String sendAddress;
 
+    private byte[] signature;
+
+    private byte[] pubKey;
+
+
     public String getTxId() {
         return txId;
     }
