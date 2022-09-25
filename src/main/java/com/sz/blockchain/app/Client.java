@@ -21,11 +21,4 @@ public class Client {
         return new Account(address, balance);
     }
 
-    public static void trade(String sendAddress, String receiverAddress, int amount) throws Exception {
-        Blockchain blockChain = Blockchain.createBlockChain();
-        Transaction transaction = Transaction.newTransaction(sendAddress, receiverAddress, amount, blockChain);
-        blockChain.mineBlock(new Transaction[]{transaction});
-    }
-
-
 }

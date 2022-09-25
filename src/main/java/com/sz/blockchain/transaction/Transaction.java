@@ -1,11 +1,21 @@
 package com.sz.blockchain.transaction;
 
+import com.sz.blockchain.app.Wallet;
+import com.sz.blockchain.app.WalletUtils;
 import com.sz.blockchain.data.Blockchain;
 import com.sz.blockchain.util.ArraysUtils;
 import com.sz.blockchain.util.Constant;
 import com.sz.blockchain.util.CryptoUtils;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.jce.spec.ECPublicKeySpec;
+import org.bouncycastle.math.ec.ECPoint;
 
-import java.lang.reflect.Array;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,7 +79,7 @@ public class Transaction {
      * @return
      */
     public static Transaction coinBaseTX(String receiverAddress){
-        TXInput txInput = new TXInput(null, -1, null);
+        TXInput txInput = new TXInput(null, -1, null, null);
 //        TXOutput txOutput = new TXOutput(Constant.SUBSIDY, receiverAddress);
         TXOutput txOutput = TXOutput.newTXOutput(Constant.SUBSIDY, receiverAddress);
         Transaction tx = new Transaction(null, new TXInput[]{txInput}, new TXOutput[]{txOutput});
@@ -79,7 +89,11 @@ public class Transaction {
     }
 
     public static Transaction newTransaction(String send, String receiver, int amount, Blockchain blockchain) throws Exception {
-        SpendableOutput spendableOutputs = blockchain.findSpendableOutputs(send, amount);
+        Wallet wallet = WalletUtils.newInstance().getWallet(send);
+        byte[] publicKey = wallet.getPublicKey();
+        byte[] pubKeyHash = CryptoUtils.ripeMD160Hash(publicKey);
+
+        SpendableOutput spendableOutputs = blockchain.findSpendableOutputs(pubKeyHash, amount);
         Map<String, int[]> unspentOutputs = spendableOutputs.getUnspentOutputs();
         int accumulatedAmount = spendableOutputs.getAccumulatedAmount();
         if(accumulatedAmount < amount){
@@ -91,7 +105,7 @@ public class Transaction {
         for (String txId : txIds) {
             int[] outIds = unspentOutputs.get(txId);
             for (int outId : outIds) {
-                txInputs = ArraysUtils.add(txInputs, new TXInput(txId, outId, send));
+                txInputs = ArraysUtils.add(txInputs, new TXInput(txId, outId, null, publicKey));
 
             }
         }
@@ -105,6 +119,7 @@ public class Transaction {
 //            txOutputs = ArraysUtils.add(txOutputs, new TXOutput(accumulatedAmount - amount, send));
         }
         Transaction newTX = new Transaction(null, txInputs, txOutputs);
+        blockchain.signTransaction(newTX, wallet.getPrivateKey());
         newTX.setId();
         return newTX;
     }
@@ -115,5 +130,98 @@ public class Transaction {
 
     public void setCoinBase(boolean coinBase) {
         isCoinBase = coinBase;
+    }
+
+    /**
+     * 对交易进行签名
+     * @param privateKey 私钥
+     * @param previousTX 之前的交易信息
+     */
+    public void sign(PrivateKey privateKey, Map<String, Transaction> previousTX) throws Exception {
+        if(this.isCoinBase()){
+            return;
+        }
+        for (TXInput txInput : getTxInputs()) {
+            if(previousTX.get(txInput.getTxId()) == null){
+                throw new Exception("incorrect transaction");
+            }
+        }
+        //生成一份副本对交易信息进行签名
+        Transaction copyTX = copyTX();
+        Security.addProvider(new BouncyCastleProvider());
+        Signature eCDSASignature = Signature.getInstance("SHA256withECDSA", BouncyCastleProvider.PROVIDER_NAME);
+        eCDSASignature.initSign(privateKey);
+        for (int i = 0; i < copyTX.getTxInputs().length; i++) {
+            TXInput copyTxInput = copyTX.getTxInputs()[i];
+            Transaction preTX = previousTX.get(copyTxInput.getTxId());
+            TXOutput preTxOutput = preTX.getTxOutputs()[copyTxInput.getTxOutputIndex()];
+            copyTxInput.setPubKey(preTxOutput.getPubKeyHash());
+            copyTxInput.setSignature(null);
+            //设置交易的编号
+            copyTX.setId();
+            eCDSASignature.update(copyTX.getId().getBytes(StandardCharsets.UTF_8));
+            byte[] sign = eCDSASignature.sign();
+            this.getTxInputs()[i].setSignature(sign);
+        }
+    }
+
+    /**
+     * 对前面的交易进行验证
+     * @param previousTX
+     * @return
+     */
+    public boolean verify(Map<String, Transaction> previousTX) throws Exception {
+        if(this.isCoinBase){
+            return true;
+        }
+        for (TXInput txInput : getTxInputs()) {
+            if(previousTX.get(txInput.getTxId()) == null){
+                throw new Exception("incorrect transaction");
+            }
+        }
+        Transaction copyTX = copyTX();
+        Security.addProvider(new BouncyCastleProvider());
+        ECParameterSpec ecParameters = ECNamedCurveTable.getParameterSpec("secp256k1");
+        KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", BouncyCastleProvider.PROVIDER_NAME);
+        Signature eCDSAVerify = Signature.getInstance("SHA256withECDSA", BouncyCastleProvider.PROVIDER_NAME);
+        for (int i = 0; i < getTxInputs().length; i++) {
+            TXInput txInput = getTxInputs()[i];
+            Transaction preTX = previousTX.get(txInput.getTxId());
+            TXOutput preTxOutput = preTX.getTxOutputs()[txInput.getTxOutputIndex()];
+            TXInput copyTxInput = copyTX.getTxInputs()[i];
+            copyTxInput.setSignature(null);
+            copyTxInput.setPubKey(preTxOutput.getPubKeyHash());
+            copyTX.setId();
+            BigInteger x = new BigInteger(1, Arrays.copyOfRange(txInput.getPubKey(), 1, 33));
+            BigInteger y = new BigInteger(1, Arrays.copyOfRange(txInput.getPubKey(), 33, 65));
+            ECPoint ecPoint = ecParameters.getCurve().createPoint(x, y, false);
+            ECPublicKeySpec keySpec = new ECPublicKeySpec(ecPoint, ecParameters);
+            PublicKey publicKey = keyFactory.generatePublic(keySpec);
+            eCDSAVerify.initVerify(publicKey);
+            eCDSAVerify.update(copyTX.getId().getBytes(StandardCharsets.UTF_8));
+            if(!eCDSAVerify.verify(txInput.getSignature())){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    /**
+     * 创建交易副本
+     * @return
+     */
+    private Transaction copyTX() {
+        TXInput[] copyTXInputs = new TXInput[getTxInputs().length];
+        for (int i = 0; i < getTxInputs().length; i++) {
+            TXInput txInput = getTxInputs()[i];
+            copyTXInputs[i] = new TXInput(txInput.getTxId(), txInput.getTxOutputIndex(), null, null);
+        }
+        TXOutput[] copyTXOutputs = new  TXOutput[getTxOutputs().length];
+        for (int i = 0; i < getTxOutputs().length; i++) {
+            TXOutput txOutput = getTxOutputs()[i];
+            copyTXOutputs[i] = new TXOutput(txOutput.getValue(), txOutput.getPubKeyHash());
+        }
+        return new Transaction(this.getId(), copyTXInputs, copyTXOutputs);
     }
 }

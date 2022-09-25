@@ -1,11 +1,15 @@
 package com.sz.blockchain.data;
+import com.sz.blockchain.app.Wallet;
+import com.sz.blockchain.app.WalletUtils;
 import com.sz.blockchain.consensus.ProofOfWork;
 import com.sz.blockchain.transaction.SpendableOutput;
 import com.sz.blockchain.transaction.TXInput;
 import com.sz.blockchain.transaction.TXOutput;
 import com.sz.blockchain.transaction.Transaction;
 import com.sz.blockchain.util.ArraysUtils;
+import com.sz.blockchain.util.CryptoUtils;
 
+import java.security.PrivateKey;
 import java.util.*;
 
 public class Blockchain {
@@ -67,10 +71,17 @@ public class Blockchain {
 
     /**
      * 挖矿
-     * git config?
+     * 在挖矿之前，先验证交易，交易没有问题，再去挖矿
      * @param transactions
      */
-    public void mineBlock(Transaction[] transactions){
+    public void mineBlock(Transaction[] transactions) throws Exception {
+        for (Transaction transaction : transactions) {
+            if(!transaction.isCoinBase()){
+                if(verifyTransaction(transaction)){
+                    throw new Exception("invalid transaction");
+                }
+            }
+        }
         Block block = createBlock(transactions);
         addBlock(block);
     }
@@ -83,14 +94,18 @@ public class Blockchain {
 
 
     public TXOutput[] findUTXOs(String address){
-        Transaction[] unspentTransactions = findUnspentTransactions(address);
+        Wallet wallet = WalletUtils.newInstance().getWallet(address);
+        byte[] publicKey = wallet.getPublicKey();
+        byte[] pubKeyHash = CryptoUtils.ripeMD160Hash(publicKey);
+
+        Transaction[] unspentTransactions = findUnspentTransactions(pubKeyHash);
         TXOutput[] UTXOs = {};
         if(unspentTransactions == null || unspentTransactions.length == 0){
             return UTXOs;
         }
         for (Transaction unspentTransaction : unspentTransactions) {
             for (TXOutput txOutput : unspentTransaction.getTxOutputs()) {
-                if(txOutput.getReceiveAddress().equals(address)){
+                if(txOutput.canUnlockUTXOs(pubKeyHash)){
                     UTXOs = ArraysUtils.add(UTXOs, txOutput);
                 }
             }
@@ -107,9 +122,10 @@ public class Blockchain {
      * 比如zsquirrel通过挖矿获得了50个btc，随后又通过挖矿又获得了50个btc
      * 随后zsquirrel给road2web3转了5个btc，那么会使用上述两个输出的一个作为输入
      * 比如使用第一笔，该笔输入必须全部花完。输入 zsquirrel,txId,-1 --------> 输出: 5,road2web3  45,zsquirrel 此时会有两个输出；一个交易，一个指向自己，为找零
+     * @param pubKeyHash
      */
-    public Transaction[] findUnspentTransactions(String address){
-        Map<String, int[]> spentTXOs = findAllSpentTXOs(address);
+    public Transaction[] findUnspentTransactions(byte[] pubKeyHash){
+        Map<String, int[]> spentTXOs = findAllSpentTXOs(pubKeyHash);
         Transaction[] unspentTXs = {};
         for (Block block : blockchain) {
             for (Transaction transaction : block.getTransactions()) {
@@ -121,7 +137,7 @@ public class Blockchain {
                     if(spentOutIndexArray != null && ArraysUtils.contains(spentOutIndexArray, outputIndex)){
                         continue;
                     }
-                    if(transaction.getTxOutputs()[outputIndex].getReceiveAddress().equals(address)){
+                    if(transaction.getTxOutputs()[outputIndex].canUnlockUTXOs(pubKeyHash)){
                         unspentTXs = ArraysUtils.add(unspentTXs, transaction);
                     }
                 }
@@ -132,10 +148,10 @@ public class Blockchain {
 
     /**
      * 查找所有的input，因为input里面存储的是上次交易的编号以及outputIndex，所以通过这种方式便可以知道哪些output被消费了
-     * @param address
+     * @param pubKeyHash
      * @return
      */
-    private Map<String, int[]> findAllSpentTXOs(String address) {
+    private Map<String, int[]> findAllSpentTXOs(byte[] pubKeyHash) {
         Map<String, int[]> spentXOs = new HashMap<>();
         for (Block block : blockchain) {
             Transaction[] transactions = block.getTransactions();
@@ -144,7 +160,7 @@ public class Blockchain {
                     continue;
                 }
                 for (TXInput txInput : transaction.getTxInputs()) {
-                    if(txInput.getSendAddress().equals(address)){
+                    if(txInput.verifyPubKey(pubKeyHash)){
                         String txId = txInput.getTxId();
                         int[] spentOutIndexArray = spentXOs.get(txId);
                         if(spentOutIndexArray == null){
@@ -162,19 +178,19 @@ public class Blockchain {
 
     /**
      * 寻找可用于进行交易的output，不需要加载出全部的output
-     * @param address
+     * @param pubKeyHash
      * @param amount
      * @return
      */
-    public SpendableOutput findSpendableOutputs(String address, int amount) {
-        Transaction[] unspentTransactions = findUnspentTransactions(address);
+    public SpendableOutput findSpendableOutputs(byte[] pubKeyHash, int amount) {
+        Transaction[] unspentTransactions = findUnspentTransactions(pubKeyHash);
         int accumulatedAmount = 0;
         Map<String, int[]> unspentOutputs = new HashMap<>();
         for (Transaction unspentTransaction : unspentTransactions) {
             String txId = unspentTransaction.getId();
             for (int outputId = 0; outputId < unspentTransaction.getTxOutputs().length; outputId++) {
                 TXOutput txOutput = unspentTransaction.getTxOutputs()[outputId];
-                if(txOutput.getReceiveAddress().equals(address) &&  accumulatedAmount < amount){
+                if(txOutput.canUnlockUTXOs(pubKeyHash) &&  accumulatedAmount < amount){
                     accumulatedAmount += txOutput.getValue();
                 }
                 int[] outputIds = unspentOutputs.get(txId);
@@ -190,5 +206,54 @@ public class Blockchain {
             }
         }
         return new SpendableOutput(accumulatedAmount, unspentOutputs);
+    }
+
+    /**
+     * 根据交易的编号查找指定的交易
+     * @param txId
+     * @return
+     * @throws Exception
+     */
+    public Transaction findTX(String txId) throws Exception {
+        for (Block block : blockchain) {
+            Transaction[] transactions = block.getTransactions();
+            for (Transaction transaction : transactions) {
+                if(txId.equals(transaction.getId())){
+                    return transaction;
+                }
+            }
+        }
+        throw new Exception("invalid txId");
+    }
+
+    /**
+     * 进行交易签名
+     * @param transaction
+     * @param privateKey
+     * @throws Exception
+     */
+    public void signTransaction(Transaction transaction, PrivateKey privateKey) throws Exception {
+        Map<String, Transaction> preTXMap = new HashMap<>();
+        for (TXInput txInput : transaction.getTxInputs()) {
+            Transaction preTX = findTX(txInput.getTxId());
+            preTXMap.put(txInput.getTxId(), preTX);
+        }
+        transaction.sign(privateKey, preTXMap);
+    }
+
+
+    /**
+     * 验证交易
+     * @param transaction
+     * @return
+     * @throws Exception
+     */
+    public boolean verifyTransaction(Transaction transaction) throws Exception {
+        Map<String, Transaction> preTXMap = new HashMap<>();
+        for (TXInput txInput : transaction.getTxInputs()) {
+            Transaction preTX = findTX(txInput.getTxId());
+            preTXMap.put(txInput.getTxId(), preTX);
+        }
+        return transaction.verify(preTXMap);
     }
 }

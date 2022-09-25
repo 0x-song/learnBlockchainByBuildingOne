@@ -13,6 +13,15 @@ public class TXOutput {
 
     private byte[] pubKeyHash;
 
+    /**
+     * 指定公钥是否可以解锁交易输出
+     * @param pubKeyHash
+     * @return
+     */
+    public boolean canUnlockUTXOs(byte[] pubKeyHash){
+        return Arrays.equals(pubKeyHash, this.pubKeyHash);
+    }
+
     public static TXOutput newTXOutput(int value, String receiveAddress){
         byte[] bytes = Base58Check.base58ToBytes(receiveAddress);
         byte[] pubKeyHash = Arrays.copyOfRange(bytes, 1, bytes.length);
@@ -25,6 +34,14 @@ public class TXOutput {
 
     public void setValue(int value) {
         this.value = value;
+    }
+
+    public byte[] getPubKeyHash() {
+        return pubKeyHash;
+    }
+
+    public void setPubKeyHash(byte[] pubKeyHash) {
+        this.pubKeyHash = pubKeyHash;
     }
 
     public TXOutput(int value, byte[] pubKeyHash) {

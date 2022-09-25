@@ -4,5 +4,5 @@ public class Constant {
 
     public static final int POW_DIFFICULTY = 200;
 
-    public static final int SUBSIDY = 50;
+    public static final int SUBSIDY = 60;
 }

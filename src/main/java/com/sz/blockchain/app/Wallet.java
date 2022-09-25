@@ -1,5 +1,7 @@
 package com.sz.blockchain.app;
 
+import com.sz.blockchain.data.Blockchain;
+import com.sz.blockchain.transaction.Transaction;
 import com.sz.blockchain.util.Base58Check;
 import com.sz.blockchain.util.CryptoUtils;
 import org.bouncycastle.jce.ECNamedCurveTable;
@@ -87,4 +89,25 @@ public class Wallet {
         return generator.generateKeyPair();
     }
 
+    public static void trade(String sendAddress, String receiverAddress, int amount, PrivateKey privateKey) throws Exception {
+        Blockchain blockChain = Blockchain.createBlockChain();
+        Transaction transaction = Transaction.newTransaction(sendAddress, receiverAddress, amount, blockChain);
+        blockChain.mineBlock(new Transaction[]{transaction});
+    }
+
+    public PrivateKey getPrivateKey() {
+        return privateKey;
+    }
+
+    public void setPrivateKey(PrivateKey privateKey) {
+        this.privateKey = privateKey;
+    }
+
+    public byte[] getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(byte[] publicKey) {
+        this.publicKey = publicKey;
+    }
 }
