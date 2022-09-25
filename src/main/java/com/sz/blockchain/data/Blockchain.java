@@ -55,7 +55,7 @@ public class Blockchain {
      * @return
      */
     public Block createGenesisBlock(){
-        Transaction[] transactions = new Transaction[]{Transaction.coinBaseTX("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")};
+        Transaction[] transactions = new Transaction[]{Transaction.coinBaseTX(WalletUtils.newInstance().randomAddress())};
         return createBlock(transactions);
     }
 

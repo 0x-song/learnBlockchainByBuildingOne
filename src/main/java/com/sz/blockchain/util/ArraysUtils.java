@@ -25,6 +25,13 @@ public class ArraysUtils {
     }
 
     public static Transaction[] add(Transaction[] unspentTXs, Transaction transaction) {
+        //如果当前tx和保存的是同一个对象
+        for (int i = 0; i < unspentTXs.length; i++) {
+            if(unspentTXs[i].getId().equals(transaction.getId())){
+                //当前tx已经在其中了，不要再添加了
+                return unspentTXs;
+            }
+        }
         Transaction[] newTX = new Transaction[unspentTXs.length + 1];
         for (int i = 0; i < unspentTXs.length; i++) {
             newTX[i] = unspentTXs[i];

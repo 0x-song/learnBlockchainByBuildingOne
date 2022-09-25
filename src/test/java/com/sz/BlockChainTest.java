@@ -61,7 +61,7 @@ public class BlockChainTest {
         blockChain.mineBlock(new Transaction[]{Transaction.coinBaseTX(sender)});
         Account balance = Client.getBalance(sender);
         System.out.println(balance);
-        blockChain.mineBlock(new Transaction[]{Transaction.newTransaction(sender,sender, 5, blockChain)});
+        blockChain.mineBlock(new Transaction[]{Transaction.newTransaction(sender,receiver, 5, blockChain)});
         Account balance1 = Client.getBalance(sender);
         System.out.println(balance1);
         Account road2web3 = Client.getBalance(receiver);
