@@ -12,6 +12,7 @@ public class SerializeUtils {
 
     /**
      * 将字节数组转换成对象
+     * 反序列化
      * @param bytes
      * @return
      */
@@ -22,6 +23,11 @@ public class SerializeUtils {
         return o;
     }
 
+    /**
+     * 序列化
+     * @param o
+     * @return
+     */
     public static byte[] serialize(Object o){
         Output output = new Output(5120);
         new Kryo().writeClassAndObject(output, o);
