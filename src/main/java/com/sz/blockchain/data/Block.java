@@ -75,5 +75,7 @@ public class Block {
         return transactions;
     }
 
-
+    public String getPreviousHash() {
+        return previousHash;
+    }
 }

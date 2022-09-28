@@ -34,7 +34,7 @@ public class ProofOfWork {
         return nonce;
     }
 
-    public static boolean validatePow(Block block){
+    public static boolean validatePow(Block block) throws Exception{
         String info = block.getBlockInfoWithNonce(block.getNonce());
         String twiceSHA256 = CryptoUtils.getTwiceSHA256(info);
         int hashCode = twiceSHA256.hashCode();

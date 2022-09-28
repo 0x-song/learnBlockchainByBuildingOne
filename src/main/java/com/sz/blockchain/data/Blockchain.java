@@ -2,6 +2,7 @@ package com.sz.blockchain.data;
 import com.sz.blockchain.app.Wallet;
 import com.sz.blockchain.app.WalletUtils;
 import com.sz.blockchain.consensus.ProofOfWork;
+import com.sz.blockchain.db.RocksDBUtils;
 import com.sz.blockchain.transaction.SpendableOutput;
 import com.sz.blockchain.transaction.TXInput;
 import com.sz.blockchain.transaction.TXOutput;
@@ -29,6 +30,8 @@ public class Blockchain {
     public static Blockchain createBlockChain(){
         return blk;
     }
+
+    private static String latestBlockHash;
 
     /**
      * 创建一个区块
@@ -63,10 +66,12 @@ public class Blockchain {
      * 将一个区块加入到区块链中
      * @param block
      */
-    public void addBlock(Block block){
+    public void addBlock(Block block) throws Exception {
         boolean result = ProofOfWork.validatePow(block);
         if(!result){}
         blockchain.add(block);
+        //区块链添加了一个区块之后，随机将该区块写入到数据库中保存
+        RocksDBUtils.putBlock(block);
     }
 
     /**
@@ -86,11 +91,72 @@ public class Blockchain {
         addBlock(block);
     }
 
-    private Blockchain(){
-        Block genesisBlock = createGenesisBlock();
-        addBlock(genesisBlock);
+    private Blockchain() {
+        latestBlockHash = RocksDBUtils.getLatestBlockHash();
+        try {
+            if(latestBlockHash == null || "".equals(latestBlockHash.trim())){
+                //没有最新的区块hash，空链
+                Block genesisBlock = createGenesisBlock();
+                addBlock(genesisBlock);
+            }else {
+                //根据最新的区块hash，获取到该block，利用prevHash，获取到之前的区块
+                restoreBlockChain();
+            }
+        }catch (Exception e){
+            System.out.println("blockchain init failed");
+        }
     }
 
+    /**
+     * 根据最新的区块hash，恢复之前的区块链
+     * @param
+     */
+    private void restoreBlockChain() throws Exception {
+        List<Block> reverseChain = new ArrayList<>();
+        Iterator iterator = new BlockChainIterator(latestBlockHash);
+        while (iterator.hasNext()){
+            Block next = (Block) iterator.next();
+            //恢复的区块也需要做一个校验
+            ProofOfWork.validatePow(next);
+            reverseChain.add(next);
+        }
+        Collections.reverse(reverseChain);
+        this.blockchain = reverseChain;
+    }
+
+    /**
+     * 根据当前传递进来的block hash依次向前去查找区块
+     */
+    private class BlockChainIterator implements Iterator<Block>{
+
+        String currentBlockHash;
+
+        public BlockChainIterator(String currentBlockHash) {
+            this.currentBlockHash = currentBlockHash;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if(currentBlockHash == null || "".equals(currentBlockHash.trim())){
+                return false;
+            }
+            Block block = RocksDBUtils.getBlock(currentBlockHash);
+            if(block == null){
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public Block next() {
+            Block currentBlock = RocksDBUtils.getBlock(currentBlockHash);
+            if(currentBlock != null){
+                this.currentBlockHash =  currentBlock.getPreviousHash();
+                return currentBlock;
+            }
+            return null;
+        }
+    }
 
 
     public TXOutput[] findUTXOs(String address){
