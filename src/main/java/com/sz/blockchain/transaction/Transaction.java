@@ -224,4 +224,7 @@ public class Transaction {
         }
         return new Transaction(this.getId(), copyTXInputs, copyTXOutputs);
     }
+
+    public Transaction() {
+    }
 }

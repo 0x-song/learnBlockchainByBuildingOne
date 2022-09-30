@@ -2,6 +2,7 @@ package com.sz.blockchain.db;
 
 import com.sz.blockchain.data.Block;
 import com.sz.blockchain.util.SerializeUtils;
+import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
@@ -14,7 +15,7 @@ import java.util.Map;
  */
 public class RocksDBUtils {
 
-    private static final String DB_FILE = "blockchain.db";
+    private static final String DB_FILE = "/Users/zsquirrel/Documents/IdeaProjects/blockchain/blockchain.db";
 
     /**
      * rocksDB数据库的key值
@@ -28,13 +29,16 @@ public class RocksDBUtils {
     private static Map<String, byte[]> blockBucket = new HashMap<>();
 
     static {
+        RocksDB.loadLibrary();
         openDB();
         initBucket();
     }
 
     private static void openDB(){
         try {
-            rocksDB = RocksDB.open(DB_FILE);
+            Options options = new Options();
+            options.setCreateIfMissing(true);
+            rocksDB = RocksDB.open(options, DB_FILE);
         } catch (RocksDBException e) {
             e.printStackTrace();
         }
@@ -88,6 +92,7 @@ public class RocksDBUtils {
      */
     public static void putBlock(Block block){
         try {
+            setLatestBlockHash(block.getHash());
             blockBucket.put(block.getHash(), SerializeUtils.serialize(block));
             rocksDB.put(SerializeUtils.serialize(BLOCK_BUCKET_KEY), SerializeUtils.serialize(blockBucket));
         } catch (RocksDBException e) {

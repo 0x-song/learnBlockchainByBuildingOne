@@ -48,4 +48,7 @@ public class TXOutput {
         this.value = value;
         this.pubKeyHash = pubKeyHash;
     }
+
+    public TXOutput() {
+    }
 }

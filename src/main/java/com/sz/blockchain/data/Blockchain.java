@@ -8,6 +8,7 @@ import com.sz.blockchain.transaction.TXInput;
 import com.sz.blockchain.transaction.TXOutput;
 import com.sz.blockchain.transaction.Transaction;
 import com.sz.blockchain.util.ArraysUtils;
+import com.sz.blockchain.util.Constant;
 import com.sz.blockchain.util.CryptoUtils;
 
 import java.security.PrivateKey;
@@ -70,6 +71,8 @@ public class Blockchain {
         boolean result = ProofOfWork.validatePow(block);
         if(!result){}
         blockchain.add(block);
+        //添加完一个区块之后，修改最新的区块哈希
+//        latestBlockHash = block.getHash();
         //区块链添加了一个区块之后，随机将该区块写入到数据库中保存
         RocksDBUtils.putBlock(block);
     }
@@ -103,6 +106,7 @@ public class Blockchain {
                 restoreBlockChain();
             }
         }catch (Exception e){
+            e.printStackTrace();
             System.out.println("blockchain init failed");
         }
     }
@@ -138,6 +142,9 @@ public class Blockchain {
         @Override
         public boolean hasNext() {
             if(currentBlockHash == null || "".equals(currentBlockHash.trim())){
+                return false;
+            }
+            if(currentBlockHash.equals(Constant.GENERIS_HASH)){
                 return false;
             }
             Block block = RocksDBUtils.getBlock(currentBlockHash);

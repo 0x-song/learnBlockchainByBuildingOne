@@ -56,7 +56,8 @@ public class BlockChainTest {
         Blockchain blockChain = Blockchain.createBlockChain();
         String sender = WalletUtils.newInstance().randomAddress();
         String receiver = WalletUtils.newInstance().randomAddress();
-
+        System.out.println(sender);
+        System.out.println(receiver);
         blockChain.mineBlock(new Transaction[]{Transaction.coinBaseTX(sender)});
         blockChain.mineBlock(new Transaction[]{Transaction.coinBaseTX(sender)});
         Account balance = Client.getBalance(sender);
@@ -75,6 +76,15 @@ public class BlockChainTest {
             String s = walletUtils.randomAddress();
             System.out.println(s);
         }
+
+    }
+
+    @Test
+    public void testBalance(){
+        //115
+        Account balance = Client.getBalance("1CZ6SgdvAbM8dTushQa9vXB8zZg9q6QEwr");
+        //5
+        Account balance1 = Client.getBalance("1D8LU9qCSgXupMKa2tsima76oXsaVs5RZa");
 
     }
 }

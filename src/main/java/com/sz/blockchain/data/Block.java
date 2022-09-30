@@ -3,10 +3,6 @@ package com.sz.blockchain.data;
 import com.sz.blockchain.consensus.ProofOfWork;
 import com.sz.blockchain.transaction.Transaction;
 import com.sz.blockchain.util.CryptoUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import java.util.Date;
 
 public class Block {
@@ -77,5 +73,36 @@ public class Block {
 
     public String getPreviousHash() {
         return previousHash;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
+
+    public void setPreviousHash(String previousHash) {
+        this.previousHash = previousHash;
+    }
+
+    public Date getCurrentTime() {
+        return currentTime;
+    }
+
+    public void setCurrentTime(Date currentTime) {
+        this.currentTime = currentTime;
+    }
+
+    public void setTarget(int target) {
+        this.target = target;
+    }
+
+    public Block() {
     }
 }

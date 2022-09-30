@@ -65,4 +65,7 @@ public class TXInput {
     public void setPubKey(byte[] pubKey) {
         this.pubKey = pubKey;
     }
+
+    public TXInput() {
+    }
 }
