@@ -166,6 +166,7 @@ public class Blockchain {
     }
 
 
+    @Deprecated
     public TXOutput[] findUTXOs(String address){
         Wallet wallet = WalletUtils.newInstance().getWallet(address);
         byte[] publicKey = wallet.getPublicKey();
@@ -255,6 +256,7 @@ public class Blockchain {
      * @param amount
      * @return
      */
+    @Deprecated
     public SpendableOutput findSpendableOutputs(byte[] pubKeyHash, int amount) {
         Transaction[] unspentTransactions = findUnspentTransactions(pubKeyHash);
         int accumulatedAmount = 0;
